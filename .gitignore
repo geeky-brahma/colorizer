@@ -53,6 +53,7 @@ coverage.xml
 training/runs/
 training/*.pt
 training/runs/*
+!training/runs/best.pt
 precursor_regression/*.pt
 precursor_regression/runs/*
 
