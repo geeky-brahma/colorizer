@@ -1,0 +1,7 @@
+Checkpoint: colorizer_v1/best.pt
+epoch: 5
+epoch_loss: 0.06503348770707616
+global_step: 42175
+cfg: {'data_dir': '/content/image-net-dataset', 'output_dir': 'colorizer/runs/exp_256_bs64_e10_w12', 'image_size': 256, 'batch_size': 64, 'epochs': 10, 'lr': 0.0002, 'num_workers': 12, 'prefetch_factor': 2, 'seed': 42, 'amp': False, 'accum_steps': 1, 'base_channels': 64}
+total_params: 31036546
+trainable_params: 31036546
