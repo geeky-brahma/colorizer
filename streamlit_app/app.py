@@ -81,7 +81,7 @@ st.set_page_config(page_title="Colorizer", layout="centered")
 def load_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = UNetColorizer(base=64).to(device)
-    ckpt = torch.load('runs/best1.pt', map_location=device)
+    ckpt = torch.load('runs/best1.pt', map_location=device, weights_only=False)
     # extract likely state dict
     if isinstance(ckpt, dict) and 'model' in ckpt:
         state = ckpt['model']
