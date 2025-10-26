@@ -46,7 +46,7 @@ coverage.xml
 .DS_Store
 
 # Model weights and datasets (keep out of git; use Git LFS for large files)
-*.pt
+# *.pt
 *.pth
 *.ckpt
 *.h5
