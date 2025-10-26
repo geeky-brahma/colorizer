@@ -1,4 +1,4 @@
-"""Small regression demo extracted from the notebook.
+"""Small regression
 
 Trains a tiny conv network to predict the mean pixel intensity of CIFAR-10 images.
 """
