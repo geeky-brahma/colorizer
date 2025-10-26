@@ -15,7 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 # Helper: ensure checkpoint exists locally, download from Google Drive if missing
-def ensure_checkpoint(dest_path="./runs/best1.pt", gdrive_id=None):
+def ensure_checkpoint(dest_path="runs/best1.pt", gdrive_id=None):
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     if os.path.exists(dest_path):
         return dest_path
@@ -80,7 +80,7 @@ def load_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = UNetColorizer(base=64).to(device)
     # ensure checkpoint exists locally (download from Google Drive if needed)
-    ckpt_path = './runs/best1.pt'
+    ckpt_path = 'runs/best1.pt'
     try:
         ensure_checkpoint(ckpt_path)
     except Exception as e:
