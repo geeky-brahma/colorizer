@@ -15,7 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 # Helper: ensure checkpoint exists locally, download from Google Drive if missing
-def ensure_checkpoint(dest_path="training/runs/best1.pt", gdrive_id=None):
+def ensure_checkpoint(dest_path="", gdrive_id=None):
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     if os.path.exists(dest_path):
         return dest_path
@@ -37,7 +37,7 @@ def ensure_checkpoint(dest_path="training/runs/best1.pt", gdrive_id=None):
     # Try using gdown first (handles large-file confirmation)
     try:
         import gdown
-        url = f"https://drive.google.com/uc?id={gdrive_id}"
+        url = f"https://drive.google.com/file/d/{gdrive_id}"
         st.info(f"Downloading checkpoint from Google Drive to {dest_path}...")
         gdown.download(url, dest_path, quiet=False)
         return dest_path
