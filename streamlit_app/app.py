@@ -117,7 +117,7 @@ def load_model():
         st.error(f"Could not ensure checkpoint {ckpt_path}: {e}")
         raise
     try:
-        ckpt = torch.load(ckpt_path, map_location=device)
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     except Exception as e:
         st.error(f"Failed to load checkpoint {ckpt_path}: {e}")
         raise
