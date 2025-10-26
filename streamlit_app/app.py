@@ -21,7 +21,7 @@ st.set_page_config(page_title="Colorizer", layout="centered")
 def load_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = UNetColorizer(base=64).to(device)
-    ckpt_path = '../training/runs/best1.pt'
+    ckpt_path = 'models/best1.pt'
     try:
         ckpt = torch.load(ckpt_path, map_location=device)
     except Exception as e:
