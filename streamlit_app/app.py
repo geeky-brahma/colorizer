@@ -6,11 +6,69 @@ from PIL import Image
 from io import BytesIO
 import sys
 from pathlib import Path
+import os
 
 # Ensure project root is on sys.path so imports work when Streamlit's cwd is the app folder
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# Helper: ensure checkpoint exists locally, download from Google Drive if missing
+def ensure_checkpoint(dest_path="training/runs/best1.pt", gdrive_id=None):
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    if os.path.exists(dest_path):
+        return dest_path
+
+    # Prefer Streamlit secrets (either key) then environment variables
+    if gdrive_id is None:
+        try:
+            gdrive_id = st.secrets.get("gdrive_file_id") or st.secrets.get("GDRIVE_FILE_ID")
+        except Exception:
+            gdrive_id = None
+        if not gdrive_id:
+            gdrive_id = os.environ.get("GDRIVE_FILE_ID") or os.environ.get("gdrive_file_id")
+
+    if not gdrive_id:
+        raise RuntimeError(
+            "No Google Drive file id provided. Set st.secrets['gdrive_file_id'] or env var GDRIVE_FILE_ID."
+        )
+
+    # Try using gdown first (handles large-file confirmation)
+    try:
+        import gdown
+        url = f"https://drive.google.com/uc?id={gdrive_id}"
+        st.info(f"Downloading checkpoint from Google Drive to {dest_path}...")
+        gdown.download(url, dest_path, quiet=False)
+        return dest_path
+    except Exception:
+        pass
+
+    # Fallback: requests approach that handles Google's confirm token for large files
+    try:
+        import requests
+        def download_file_from_google_drive(id, destination):
+            URL = "https://docs.google.com/uc?export=download"
+            session = requests.Session()
+            response = session.get(URL, params={'id': id}, stream=True)
+            token = None
+            for k, v in response.cookies.items():
+                if k.startswith('download_warning'):
+                    token = v
+            if token:
+                params = {'id': id, 'confirm': token}
+                response = session.get(URL, params=params, stream=True)
+            CHUNK_SIZE = 32768
+            with open(destination, "wb") as f:
+                for chunk in response.iter_content(CHUNK_SIZE):
+                    if chunk:
+                        f.write(chunk)
+        st.info(f"Downloading checkpoint from Google Drive to {dest_path} (fallback)...")
+        download_file_from_google_drive(gdrive_id, dest_path)
+        return dest_path
+    except Exception as e:
+        raise RuntimeError(f"Failed to download checkpoint from Google Drive: {e}")
+
 
 # Import local model
 from training.models.unet_colorizer import UNetColorizer
@@ -21,7 +79,13 @@ st.set_page_config(page_title="Colorizer", layout="centered")
 def load_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = UNetColorizer(base=64).to(device)
-    ckpt_path = 'models/best1.pt'
+    # ensure checkpoint exists locally (download from Google Drive if needed)
+    ckpt_path = 'training/runs/best1.pt'
+    try:
+        ensure_checkpoint(ckpt_path)
+    except Exception as e:
+        st.error(f"Could not ensure checkpoint {ckpt_path}: {e}")
+        raise
     try:
         ckpt = torch.load(ckpt_path, map_location=device)
     except Exception as e:
