@@ -23,7 +23,9 @@ def ensure_checkpoint(dest_path="runs", gdrive_id=None):
     # Prefer Streamlit secrets (either key) then environment variables
     if gdrive_id is None:
         try:
-            gdrive_id = st.secrets.get("gdrive_file_id") or st.secrets.get("GDRIVE_FILE_ID")
+
+            gdrive_id = "1QEztBw4dwxjdf3yw9k4ZhKkyjMc8aUkt"
+            # gdrive_id = st.secrets.get("gdrive_file_id") or st.secrets.get("GDRIVE_FILE_ID")
         except Exception:
             gdrive_id = None
         if not gdrive_id:
@@ -37,7 +39,7 @@ def ensure_checkpoint(dest_path="runs", gdrive_id=None):
     # Try using gdown first (handles large-file confirmation)
     try:
         import gdown
-        url = f"https://drive.google.com/file/d/{gdrive_id}"
+        url = f"https://drive.google.com/uc?id={gdrive_id}"
         st.info(f"Downloading checkpoint from Google Drive to {dest_path}...")
         gdown.download(url, dest_path, quiet=False)
         return dest_path
@@ -79,19 +81,8 @@ st.set_page_config(page_title="Colorizer", layout="centered")
 def load_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = UNetColorizer(base=64).to(device)
-    # ensure checkpoint exists locally (download from Google Drive if needed)
-    ckpt_path = 'runs/best1.pt'
-    try:
-        ensure_checkpoint(ckpt_path)
-    except Exception as e:
-        st.error(f"Could not ensure checkpoint {ckpt_path}: {e}")
-        raise
-    try:
-        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-    except Exception as e:
-        st.error(f"Failed to load checkpoint {ckpt_path}: {e}")
-        raise
-
+    ckpt = torch.load('runs/best1.pt', map_location=device)
+    # extract likely state dict
     if isinstance(ckpt, dict) and 'model' in ckpt:
         state = ckpt['model']
     elif isinstance(ckpt, dict) and 'model_state_dict' in ckpt:
@@ -99,18 +90,57 @@ def load_model():
     else:
         state = ckpt
 
+    # try non-strict load first, fallback to a simple name mapping if necessary
     try:
-        model.load_state_dict(state, strict=False)
-    except Exception:
+        res = model.load_state_dict(state, strict=False)
+        if getattr(res, 'missing_keys', None) or getattr(res, 'unexpected_keys', None):
+            print('load_state_dict result:', res)
+    except RuntimeError as e:
+        print('Initial load failed, attempting mapping:', e)
         mapped = {}
         for k, v in state.items():
             new_k = k.replace('.net', '')
             new_k = new_k.replace('mid', 'bottleneck')
             new_k = new_k.replace('out_conv', 'head.0')
             mapped[new_k] = v
-        model.load_state_dict(mapped, strict=False)
-
+        res = model.load_state_dict(mapped, strict=False)
+        print('Mapped load result:', res)
     model.eval()
+
+    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # model = UNetColorizer(base=64).to(device)
+    # # ensure checkpoint exists locally (download from Google Drive if needed)
+    # ckpt_path = 'runs/best1.pt'
+    # # try:
+    # #     ensure_checkpoint(ckpt_path)
+    # # except Exception as e:
+    # #     st.error(f"Could not ensure checkpoint {ckpt_path}: {e}")
+    # #     raise
+    # try:
+    #     ckpt = torch.load(ckpt_path, map_location=device)
+    # except Exception as e:
+    #     st.error(f"Failed to load checkpoint {ckpt_path}: {e}")
+    #     raise
+
+    # if isinstance(ckpt, dict) and 'model' in ckpt:
+    #     state = ckpt['model']
+    # elif isinstance(ckpt, dict) and 'model_state_dict' in ckpt:
+    #     state = ckpt['model_state_dict']
+    # else:
+    #     state = ckpt
+
+    # try:
+    #     model.load_state_dict(state, strict=False)
+    # except Exception:
+    #     mapped = {}
+    #     for k, v in state.items():
+    #         new_k = k.replace('.net', '')
+    #         new_k = new_k.replace('mid', 'bottleneck')
+    #         new_k = new_k.replace('out_conv', 'head.0')
+    #         mapped[new_k] = v
+    #     model.load_state_dict(mapped, strict=False)
+
+    # model.eval()
     return model, device
 
 

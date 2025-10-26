@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from training.models.unet_colorizer import UNetColorizer
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model = UNetColorizer(base=64).to(device)
-ckpt = torch.load('training/runs/best.pt', map_location=device)
+# Explicitly set weights_only=False for compatibility with PyTorch >=2.6 default behavior
+ckpt = torch.load('training/runs/best1.pt', map_location=device, weights_only=False)
 # extract likely state dict
 if isinstance(ckpt, dict) and 'model' in ckpt:
     state = ckpt['model']
