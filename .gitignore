@@ -51,7 +51,7 @@ coverage.xml
 *.ckpt
 *.h5
 # Ignore any accidentally placed `best.pt` files in the repo root or app folders
-streamlit_app/models/best1.pt
+streamlit_app/models/*
 best.pt
 training/runs/
 training/*.pt
